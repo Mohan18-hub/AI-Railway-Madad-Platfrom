@@ -1,0 +1,32 @@
+import { Routes, Route } from "react-router-dom";
+import { Toaster } from "sonner";
+
+// Pages
+import HomePage from "@/pages/HomePage";
+import ComplaintFormPage from "@/pages/ComplaintFormPage";
+import ComplaintTrackerPage from "@/pages/ComplaintTrackerPage";
+import DashboardPage from "@/pages/DashboardPage";
+import OfficerPanelPage from "@/pages/OfficerPanelPage";
+import AnalyticsPage from "@/pages/AnalyticsPage";
+import NotFoundPage from "@/pages/NotFoundPage";
+
+function App() {
+  return (
+    <>
+      <Routes>
+        <Route path="/" element={<HomePage />} />
+        <Route path="/complaint/new" element={<ComplaintFormPage />} />
+        <Route path="/complaint/track" element={<ComplaintTrackerPage />} />
+        <Route path="/complaint/track/:complaintNumber" element={<ComplaintTrackerPage />} />
+        <Route path="/dashboard" element={<DashboardPage />} />
+        <Route path="/officer" element={<OfficerPanelPage />} />
+        <Route path="/analytics" element={<AnalyticsPage />} />
+        {/* NOTE: Chatbot route/placement is TBD — see clarification question #4 */}
+        <Route path="*" element={<NotFoundPage />} />
+      </Routes>
+      <Toaster position="top-right" richColors />
+    </>
+  );
+}
+
+export default App;

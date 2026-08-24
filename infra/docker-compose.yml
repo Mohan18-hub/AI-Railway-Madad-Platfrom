@@ -1,0 +1,207 @@
+version: "3.9"
+
+services:
+  # ── FastAPI Backend ────────────────────────
+  backend:
+    build:
+      context: ../backend
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=${DATABASE_URL}
+      - REDIS_URL=${REDIS_URL}
+      - SECRET_KEY=${SECRET_KEY}
+      - JWT_SECRET_KEY=${JWT_SECRET_KEY}
+      - JWT_ALGORITHM=${JWT_ALGORITHM:-HS256}
+      - LLM_PROVIDER=${LLM_PROVIDER}
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - OPENROUTER_API_KEY=${OPENROUTER_API_KEY}
+      - EMBEDDING_MODEL=${EMBEDDING_MODEL}
+      - VECTOR_DB_PROVIDER=${VECTOR_DB_PROVIDER}
+      - CV_PROVIDER=${CV_PROVIDER}
+      - HUGGINGFACE_API_KEY=${HUGGINGFACE_API_KEY}
+      - SMS_PROVIDER=${SMS_PROVIDER}
+      - EMAIL_PROVIDER=${EMAIL_PROVIDER}
+      - PUSH_PROVIDER=${PUSH_PROVIDER}
+      - CORS_ORIGINS=${CORS_ORIGINS}
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - railmadad
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # ── Celery Worker ──────────────────────────
+  worker:
+    build:
+      context: ../backend
+      dockerfile: Dockerfile.worker
+    environment:
+      - DATABASE_URL=${DATABASE_URL}
+      - REDIS_URL=${REDIS_URL}
+      - CELERY_BROKER_URL=${CELERY_BROKER_URL}
+      - CELERY_RESULT_BACKEND=${CELERY_RESULT_BACKEND}
+      - LLM_PROVIDER=${LLM_PROVIDER}
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - EMBEDDING_MODEL=${EMBEDDING_MODEL}
+      - WHISPER_MODEL_SIZE=${WHISPER_MODEL_SIZE:-base}
+      - CV_PROVIDER=${CV_PROVIDER}
+      - HUGGINGFACE_API_KEY=${HUGGINGFACE_API_KEY}
+      - SMS_PROVIDER=${SMS_PROVIDER}
+      - EMAIL_PROVIDER=${EMAIL_PROVIDER}
+      - PUSH_PROVIDER=${PUSH_PROVIDER}
+    depends_on:
+      - backend
+      - redis
+    restart: unless-stopped
+    networks:
+      - railmadad
+
+  # ── Celery Beat (Scheduler) ───────────────
+  beat:
+    build:
+      context: ../backend
+      dockerfile: Dockerfile.worker
+    command: ["celery", "-A", "app.celery_app", "beat", "--loglevel=info"]
+    environment:
+      - CELERY_BROKER_URL=${CELERY_BROKER_URL}
+      - CELERY_RESULT_BACKEND=${CELERY_RESULT_BACKEND}
+    depends_on:
+      - redis
+    restart: unless-stopped
+    networks:
+      - railmadad
+
+  # ── Redis (Cache + Broker) ────────────────
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redisdata:/data
+    restart: unless-stopped
+    networks:
+      - railmadad
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ── PostgreSQL + pgvector ─────────────────
+  postgres:
+    image: pgvector/pgvector:pg15
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER:-postgres}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-postgres}
+      - POSTGRES_DB=${POSTGRES_DB:-railmadad}
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    restart: unless-stopped
+    networks:
+      - railmadad
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ── Qdrant (optional — uncomment if VECTOR_DB_PROVIDER=qdrant) ──
+  # qdrant:
+  #   image: qdrant/qdrant:latest
+  #   ports:
+  #     - "6333:6333"
+  #     - "6334:6334"
+  #   volumes:
+  #     - qdrantdata:/qdrant/storage
+  #   restart: unless-stopped
+  #   networks:
+  #     - railmadad
+
+  # ── Nginx Reverse Proxy ───────────────────
+  nginx:
+    image: nginx:1.25-alpine
+    ports:
+      - "${NGINX_PORT:-80}:80"
+      - "${NGINX_SSL_PORT:-443}:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - backend
+    restart: unless-stopped
+    networks:
+      - railmadad
+
+  # ── Monitoring (optional — uncomment for production) ──
+  # prometheus:
+  #   image: prom/prometheus:latest
+  #   ports:
+  #     - "9090:9090"
+  #   volumes:
+  #     - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+  #     - prometheusdata:/prometheus
+  #   networks:
+  #     - railmadad
+  #   restart: unless-stopped
+  #
+  # grafana:
+  #   image: grafana/grafana:latest
+  #   ports:
+  #     - "3001:3000"
+  #   environment:
+  #     - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD:-admin}
+  #   volumes:
+  #     - grafanadata:/var/lib/grafana
+  #   networks:
+  #     - railmadad
+  #   restart: unless-stopped
+  #
+  # elasticsearch:
+  #   image: docker.elastic.co/elasticsearch/elasticsearch:8.11.0
+  #   environment:
+  #     - discovery.type=single-node
+  #     - xpack.security.enabled=false
+  #     - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+  #   ports:
+  #     - "9200:9200"
+  #   volumes:
+  #     - esdata:/usr/share/elasticsearch/data
+  #   networks:
+  #     - railmadad
+  #   restart: unless-stopped
+  #
+  # kibana:
+  #   image: docker.elastic.co/kibana/kibana:8.11.0
+  #   ports:
+  #     - "5601:5601"
+  #   environment:
+  #     - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+  #   depends_on:
+  #     - elasticsearch
+  #   networks:
+  #     - railmadad
+  #   restart: unless-stopped
+
+volumes:
+  pgdata:
+  redisdata:
+  # qdrantdata:
+  # prometheusdata:
+  # grafanadata:
+  # esdata:
+
+networks:
+  railmadad:
+    driver: bridge
