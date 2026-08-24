@@ -1,0 +1,39 @@
+name: Deploy Backend
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "backend/**"
+      - "infra/**"
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # TODO: Configure container registry based on chosen cloud provider
+      # For AWS ECR:
+      # - uses: aws-actions/configure-aws-credentials@v4
+      #   with:
+      #     aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      #     aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      #     aws-region: ${{ secrets.AWS_REGION }}
+      # - uses: aws-actions/amazon-ecr-login@v2
+      #
+      # For GCP Artifact Registry:
+      # - uses: google-github-actions/auth@v2
+      #   with:
+      #     credentials_json: ${{ secrets.GCP_SA_KEY }}
+      # - uses: google-github-actions/setup-gcloud@v2
+
+      - name: Build Backend Image
+        run: docker build -t railmadad-backend:${{ github.sha }} ./backend
+
+      - name: Build Worker Image
+        run: docker build -t railmadad-worker:${{ github.sha }} -f ./backend/Dockerfile.worker ./backend
+
+      # TODO: Push to container registry and trigger deployment
+      # docker push <registry>/railmadad-backend:${{ github.sha }}
+      # docker push <registry>/railmadad-worker:${{ github.sha }}
