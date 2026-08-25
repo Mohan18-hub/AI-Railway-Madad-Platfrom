@@ -51,7 +51,7 @@ const DEMO_EVENTS: StatusEvent[] = [
   },
 ];
 
-export default function StatusTimeline({ complaintId, events }: StatusTimelineProps) {
+export default function StatusTimeline({ complaintId: _complaintId, events }: StatusTimelineProps) {
   const timelineEvents = events || DEMO_EVENTS;
 
   return (
@@ -62,7 +62,7 @@ export default function StatusTimeline({ complaintId, events }: StatusTimelinePr
         <div className="absolute left-4 top-0 bottom-0 w-0.5 bg-border" />
 
         <div className="space-y-6">
-          {timelineEvents.map((event, index) => (
+          {timelineEvents.map((event) => (
             <div key={event.id} className="flex gap-4 relative">
               {/* Dot */}
               <div

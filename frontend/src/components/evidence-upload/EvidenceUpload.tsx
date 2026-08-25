@@ -16,7 +16,7 @@ interface FilePreview {
   type: "image" | "video" | "audio" | "document";
 }
 
-const ACCEPTED_TYPES: Record<string, string> = {
+export const ACCEPTED_TYPES: Record<string, string> = {
   "image/*": "Images",
   "video/*": "Videos",
   "audio/*": "Audio",

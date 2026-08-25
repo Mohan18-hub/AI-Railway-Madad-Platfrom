@@ -13,11 +13,11 @@ from app.core.database import Base, get_db
 from app.main import app
 
 
-# Use a separate test database
-TEST_DATABASE_URL = settings.DATABASE_URL.replace("/railmadad", "/railmadad_test")
+TEST_DATABASE_URL = "sqlite+aiosqlite:///:memory:"
 
 test_engine = create_async_engine(TEST_DATABASE_URL, echo=False)
 test_session_factory = async_sessionmaker(test_engine, class_=AsyncSession, expire_on_commit=False)
+
 
 
 @pytest.fixture(scope="session")

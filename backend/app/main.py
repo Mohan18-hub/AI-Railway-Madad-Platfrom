@@ -52,9 +52,12 @@ if settings.PROMETHEUS_ENABLED:
 
 # ── API Routes ──────────────────────────────
 app.include_router(api_v1_router, prefix="/api/v1")
+app.include_router(api_v1_router, prefix="/api")
 
 
 @app.get("/health", tags=["Health"])
+@app.get("/api/health", tags=["Health"])
 async def health_check() -> dict[str, str]:
     """Health check endpoint for Docker / load balancer probes."""
     return {"status": "healthy", "service": "railmadad-api"}
+
