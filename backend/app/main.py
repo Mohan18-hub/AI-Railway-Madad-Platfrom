@@ -47,8 +47,11 @@ app.add_middleware(
 
 # ── Prometheus Metrics ──────────────────────
 if settings.PROMETHEUS_ENABLED:
-    from prometheus_fastapi_instrumentator import Instrumentator
-    Instrumentator().instrument(app).expose(app)
+    try:
+        from prometheus_fastapi_instrumentator import Instrumentator
+        Instrumentator().instrument(app).expose(app)
+    except ImportError:
+        pass
 
 # ── API Routes ──────────────────────────────
 app.include_router(api_v1_router, prefix="/api/v1")

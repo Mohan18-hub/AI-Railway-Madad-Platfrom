@@ -3,6 +3,7 @@ import { Toaster } from "sonner";
 
 // Pages
 import ClaudeChatPage from "@/pages/ClaudeChatPage";
+import LoginPage from "@/pages/LoginPage";
 import HomePage from "@/pages/HomePage";
 import ComplaintFormPage from "@/pages/ComplaintFormPage";
 import ComplaintTrackerPage from "@/pages/ComplaintTrackerPage";
@@ -17,6 +18,7 @@ function App() {
       <Routes>
         <Route path="/" element={<ClaudeChatPage />} />
         <Route path="/chat" element={<ClaudeChatPage />} />
+        <Route path="/login" element={<LoginPage />} />
         <Route path="/home" element={<HomePage />} />
         <Route path="/complaint/new" element={<ComplaintFormPage />} />
         <Route path="/complaint/track" element={<ComplaintTrackerPage />} />

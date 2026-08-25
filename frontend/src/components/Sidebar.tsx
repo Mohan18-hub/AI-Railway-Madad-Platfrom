@@ -1,5 +1,6 @@
-import React from "react";
-import { Plus, MessageSquare, Search, Train, Clock, ShieldCheck, ChevronRight } from "lucide-react";
+import React, { useState } from "react";
+import { Plus, MessageSquare, Search, Train, Clock, ShieldCheck, ChevronRight, LogIn } from "lucide-react";
+import { Link } from "react-router-dom";
 import StatusBadge from "./StatusBadge";
 
 export interface ComplaintThread {
@@ -29,7 +30,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   isOpenMobile = false,
   onCloseMobile,
 }) => {
-  const [searchTerm, setSearchTerm] = React.useState("");
+  const [searchTerm, setSearchTerm] = useState("");
 
   const filteredComplaints = complaints.filter(
     (c) =>
@@ -55,6 +56,14 @@ export const Sidebar: React.FC<SidebarProps> = ({
             <span className="text-[10px] text-amber-400 font-medium">Passenger Assistant</span>
           </div>
         </div>
+
+        <Link
+          to="/login"
+          className="p-1.5 text-slate-400 hover:text-amber-400 hover:bg-slate-800 rounded-lg transition-colors"
+          title="Passenger Account Login & Verification"
+        >
+          <LogIn className="w-4 h-4" />
+        </Link>
       </div>
 
       {/* New Complaint Button */}

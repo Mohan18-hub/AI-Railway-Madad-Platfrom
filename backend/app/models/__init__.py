@@ -181,7 +181,7 @@ class Department(TimestampMixin, Base):
     name = Column(String(255), unique=True, nullable=False)
     code = Column(String(20), unique=True, nullable=False)
     description = Column(Text, nullable=True)
-    handles_categories = Column(ARRAY(String), nullable=True)
+    handles_categories = Column(ARRAY(String).with_variant(JSON, "sqlite"), nullable=True)
     sla_hours = Column(Integer, default=48)
     is_active = Column(Boolean, default=True)
 

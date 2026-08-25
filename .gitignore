@@ -65,3 +65,11 @@ Desktop.ini
 *.pth
 models_cache/
 .cache/
+
+# ── Database ─────────────────────────────────
+*.db
+*.sqlite
+*.sqlite3
+
+# ── Vite Timestamps ──────────────────────────
+*.timestamp-*.mjs

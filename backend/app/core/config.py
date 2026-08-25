@@ -14,7 +14,7 @@ class Settings(BaseSettings):
     ALLOWED_HOSTS: str = "localhost,127.0.0.1"
 
     # ── Database ─────────────────────────────
-    DATABASE_URL: str = "postgresql+asyncpg://postgres:postgres@localhost:5432/railmadad"
+    DATABASE_URL: str = "sqlite+aiosqlite:///./railmadad.db"
 
     # ── Redis ────────────────────────────────
     REDIS_URL: str = "redis://localhost:6379/0"

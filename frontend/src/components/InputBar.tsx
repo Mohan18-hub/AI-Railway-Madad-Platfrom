@@ -1,5 +1,6 @@
 import React, { useState, useRef } from "react";
-import { Send, Image, X, Sparkles, Loader2 } from "lucide-react";
+import { Send, Image, X, Sparkles, Loader2, Mic, MicOff } from "lucide-react";
+import { toast } from "sonner";
 
 interface InputBarProps {
   onSendMessage: (text: string, attachment?: { name: string; url: string; type: string }) => void;
@@ -9,7 +10,9 @@ interface InputBarProps {
 export const InputBar: React.FC<InputBarProps> = ({ onSendMessage, isLoading = false }) => {
   const [inputText, setInputText] = useState("");
   const [attachment, setAttachment] = useState<{ name: string; url: string; type: string } | null>(null);
+  const [isListening, setIsListening] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const recognitionRef = useRef<any>(null);
 
   const handleSend = () => {
     if ((!inputText.trim() && !attachment) || isLoading) return;
@@ -34,6 +37,50 @@ export const InputBar: React.FC<InputBarProps> = ({ onSendMessage, isLoading = f
         url,
         type: file.type,
       });
+    }
+  };
+
+  // Voice Input Speech Recognition Feature
+  const toggleVoiceInput = () => {
+    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      toast.error("Voice input is not supported in this browser. Please try Chrome or Edge.");
+      return;
+    }
+
+    if (isListening) {
+      if (recognitionRef.current) recognitionRef.current.stop();
+      setIsListening(false);
+      toast.info("Voice input stopped.");
+    } else {
+      const recognition = new SpeechRecognition();
+      recognition.continuous = false;
+      recognition.interimResults = true;
+      recognition.lang = "en-IN";
+
+      recognition.onstart = () => {
+        setIsListening(true);
+        toast.success("Listening... Speak your grievance now.");
+      };
+
+      recognition.onresult = (event: any) => {
+        const transcript = Array.from(event.results)
+          .map((result: any) => result[0].transcript)
+          .join("");
+        setInputText(transcript);
+      };
+
+      recognition.onerror = (event: any) => {
+        console.warn("Speech recognition error:", event.error);
+        setIsListening(false);
+      };
+
+      recognition.onend = () => {
+        setIsListening(false);
+      };
+
+      recognitionRef.current = recognition;
+      recognition.start();
     }
   };
 
@@ -96,13 +143,27 @@ export const InputBar: React.FC<InputBarProps> = ({ onSendMessage, isLoading = f
           <Image className="w-5 h-5" />
         </button>
 
+        {/* Voice Input in the Chatbot Button */}
+        <button
+          type="button"
+          onClick={toggleVoiceInput}
+          className={`p-2 rounded-xl transition-colors shrink-0 ${
+            isListening
+              ? "bg-rose-500/20 text-rose-400 animate-pulse border border-rose-500/30"
+              : "text-slate-400 hover:text-amber-400 hover:bg-slate-800"
+          }`}
+          title="Voice input in the chatbot"
+        >
+          {isListening ? <MicOff className="w-5 h-5" /> : <Mic className="w-5 h-5" />}
+        </button>
+
         {/* Controlled Textarea */}
         <textarea
           rows={1}
           value={inputText}
           onChange={(e) => setInputText(e.target.value)}
           onKeyDown={handleKeyDown}
-          placeholder="Describe your grievance or type your PNR number..."
+          placeholder={isListening ? "Listening... Speak now..." : "Describe your grievance or type your PNR number..."}
           className="flex-1 bg-transparent text-slate-100 placeholder-slate-500 text-sm focus:outline-none resize-none max-h-32 py-1.5 px-2"
         />
 
